@@ -15,6 +15,7 @@
 # DAMAGES OR OTHER LIABILITY,
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.import os
+import sys
 import os
 import requests
 import click
@@ -28,6 +29,8 @@ import pandas as pd
               help="width in pixels for the image.")
 @click.option('--height', '-h', default=768, type=int, show_default=True,
               help="height in pixels for the image.")
+@click.option('--country', '-c', default='Germany', type=str, show_default=True,
+              help="country as filter for the data")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
     always = True
@@ -39,8 +42,24 @@ def main(**options):
             stream.write(response.content)
 
     df = pd.read_csv('covid19.csv')
-    # filter for Germany
-    df_concrete = df[df.countriesAndTerritories.eq('Germany')]
+
+    # searching for the country defined in the options
+    country_filter = options['country'].lower()
+    countries = set(country for country in df['countriesAndTerritories'])
+
+    found = False
+    for pos, country in enumerate(countries):
+        if country.lower() == country_filter:
+            country_filter = country
+            found = True
+            break
+
+    if not found:
+        print("Country '%s' not found!" % options['country'])
+        sys.exit(1)
+
+    # filter for concrete country
+    df_concrete = df[df.countriesAndTerritories.eq(country_filter)]
     # sort by date ascending
     df_concrete = df_concrete.sort_values(by=['year', 'month', 'day'])
     df_concrete = df_concrete.reset_index(drop=True)
@@ -52,24 +71,24 @@ def main(**options):
     DPI = fig.get_dpi()
     fig.set_size_inches(options['width']/float(DPI), options['height']/float(DPI))
 
-    title = 'Corona Infizierte in Deutschland (Insgesamt: %d)' % df_concrete['cases'].sum()
+    title = 'Corona Cases In %s (Total: %d)' % (country_filter, df_concrete['cases'].sum())
     axes = df_concrete.plot(x='dateRep', y='cases', title=title,
                             ax=main_axes[0],
                             kind='line', grid=True, color='#008000', legend=False)
-    axes.set_xlabel('Datum')
-    axes.set_ylabel('Infizierte pro Tag')
+    axes.set_xlabel('Date')
+    axes.set_ylabel('Cases Per Day')
 
     # square polynomial fit for Corona cases
     x = np.arange(df_concrete['dateRep'].values.flatten().shape[0])
     p = np.poly1d(np.polyfit(x, df_concrete['cases'].values.flatten(), 4))
     main_axes[0].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
 
-    title = 'Corona Tote in Deutschland (Insgesamt: %d)' % df_concrete['deaths'].sum()
+    title = 'Corona Deaths In %s (Total: %d)' % (country_filter, df_concrete['deaths'].sum())
     axes = df_concrete.plot(x='dateRep', y='deaths', title=title,
                             ax=main_axes[1],
                             kind='line', grid=True, color='#008000', legend=False)
-    axes.set_xlabel('Datum')
-    axes.set_ylabel('Tote pro Tag')
+    axes.set_xlabel('Date')
+    axes.set_ylabel('Deaths Per Day')
 
     # square polynomial fit for Corona deaths
     p = np.poly1d(np.polyfit(x, df_concrete['deaths'].values.flatten(), 4))

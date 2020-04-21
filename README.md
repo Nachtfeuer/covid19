@@ -38,9 +38,12 @@ The tool also provides command line options:
 > python visualize.py --help
 Usage: visualize.py [OPTIONS]
 
+  Visualizing covid19 data with matplotlib, panda and numpy.
+
 Options:
-  -w, --width INTEGER   width in pixels for the image  [default: 1024]
-  -h, --height INTEGER  height in pixels for the image  [default: 768]
+  -w, --width INTEGER   width in pixels for the image.  [default: 1024]
+  -h, --height INTEGER  height in pixels for the image.  [default: 768]
+  -c, --country TEXT    country as filter for the data  [default: Germany]
   --help                Show this message and exit.
 ```
 

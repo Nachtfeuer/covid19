@@ -120,3 +120,8 @@ plt.savefig('covid19.png', format='png')
 # show the window with the result
 plt.show()
 ```
+
+## Links
+
+ - https://requests.readthedocs.io/en/master/
+ - https://click.palletsprojects.com/en/7.x/

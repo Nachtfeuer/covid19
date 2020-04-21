@@ -17,7 +17,7 @@ The whole thing is written in Python 3. You require to have some
 libraries installed:
 
 ```
-pip install requests numpy pandas matplotlib
+pip install requests numpy pandas matplotlib click
 ```
 
 With this you simply can run the script like this:
@@ -31,6 +31,18 @@ a file **covid19.png** is generated. In addition the viewer
 is started showing you the results:
 
 ![](docs/images/viewer.png)
+
+The tool also provides command line options:
+
+```
+> python visualize.py --help
+Usage: visualize.py [OPTIONS]
+
+Options:
+  -w, --width INTEGER   width in pixels for the image  [default: 1024]
+  -h, --height INTEGER  height in pixels for the image  [default: 768]
+  --help                Show this message and exit.
+```
 
 ## Links
 

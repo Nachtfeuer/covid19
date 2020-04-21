@@ -3,3 +3,4 @@ covid19.png
 .pytest_cache/
 .benchmarks/
 __pycache__/
+visualize.log

@@ -17,11 +17,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.import os
 import sys
 import os
+import platform
+import logging
 import requests
 import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+
+def initialize_logging():
+    """Initializing the logging (file and console)"""
+    format = '%(asctime)s - %(levelname)s - %(message)s'
+    # file based logging
+    logging.basicConfig(filename='visualize.log', level=logging.INFO, format=format)
+    # adding console based logging
+    consoleLogger = logging.StreamHandler()
+    consoleLogger.setFormatter(logging.Formatter(format))
+    logging.getLogger().addHandler(consoleLogger)
+    # basic information at beginning (Python and platform)
+    logging.info("Python %s", sys.version)
+    logging.info("Platform %s", platform.platform())
 
 
 @click.command()
@@ -33,8 +49,12 @@ import pandas as pd
               help="country as filter for the data")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
+    initialize_logging()
     always = True
     url = "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
+    logging.info("data url: %s", url)
+    logging.info("image resolution: %(width)dx%(height)d pixel", options)
+    logging.info("country filter: %(country)s", options)
 
     if not os.path.isfile("covid19.csv") or always:
         response = requests.get(url)
@@ -55,7 +75,7 @@ def main(**options):
             break
 
     if not found:
-        print("Country '%s' not found!" % options['country'])
+        logging.error("Country '%s' not found!", options['country'])
         sys.exit(1)
 
     # filter for concrete country

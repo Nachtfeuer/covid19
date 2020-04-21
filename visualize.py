@@ -50,6 +50,8 @@ def initialize_logging():
 @click.option('--format', '-f', default='png', type=click.Choice(['png', 'svg', 'jpg']),
               show_default=True,
               help="File format for image.")
+@click.option('--viewer/--no-viewer', default=True, show_default=True,
+              help="Show/hide the viewer.")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
     initialize_logging()
@@ -59,6 +61,7 @@ def main(**options):
     logging.info("image resolution: %(width)dx%(height)d pixel", options)
     logging.info("country filter: %(country)s", options)
     logging.info("image format: %(format)s", options)
+    logging.info("show viewer: %(viewer)s", options)
 
     if not os.path.isfile("covid19.csv") or always:
         response = requests.get(url)
@@ -120,8 +123,10 @@ def main(**options):
 
     # export by given format
     plt.savefig('covid19.%s' % options['format'], format=options['format'])
-    # show the window with the result
-    plt.show()
+
+    if options['viewer']:
+        # show the window with the result
+        plt.show()
 
 
 if __name__ == "__main__":

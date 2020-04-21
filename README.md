@@ -41,10 +41,13 @@ Usage: visualize.py [OPTIONS]
   Visualizing covid19 data with matplotlib, panda and numpy.
 
 Options:
-  -w, --width INTEGER   width in pixels for the image.  [default: 1024]
-  -h, --height INTEGER  height in pixels for the image.  [default: 768]
-  -c, --country TEXT    country as filter for the data  [default: Germany]
-  --help                Show this message and exit.
+  -w, --width INTEGER         Width in pixels for the image.  [default: 1024]
+  -h, --height INTEGER        Height in pixels for the image.  [default: 768]
+  -c, --country TEXT          Country as filter for the data.  [default:
+                              Germany]
+  -f, --format [png|svg|jpg]  File format for image.  [default: png]
+  --viewer / --no-viewer      Show/hide the viewer.  [default: True]
+  --help                      Show this message and exit.
 ```
 
 ## Links

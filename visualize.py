@@ -42,11 +42,14 @@ def initialize_logging():
 
 @click.command()
 @click.option('--width', '-w', default=1024, type=int, show_default=True,
-              help="width in pixels for the image.")
+              help="Width in pixels for the image.")
 @click.option('--height', '-h', default=768, type=int, show_default=True,
-              help="height in pixels for the image.")
+              help="Height in pixels for the image.")
 @click.option('--country', '-c', default='Germany', type=str, show_default=True,
-              help="country as filter for the data")
+              help="Country as filter for the data.")
+@click.option('--format', '-f', default='png', type=click.Choice(['png', 'svg', 'jpg']),
+              show_default=True,
+              help="File format for image.")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
     initialize_logging()
@@ -55,6 +58,7 @@ def main(**options):
     logging.info("data url: %s", url)
     logging.info("image resolution: %(width)dx%(height)d pixel", options)
     logging.info("country filter: %(country)s", options)
+    logging.info("image format: %(format)s", options)
 
     if not os.path.isfile("covid19.csv") or always:
         response = requests.get(url)
@@ -114,8 +118,8 @@ def main(**options):
     p = np.poly1d(np.polyfit(x, df_concrete['deaths'].values.flatten(), 4))
     main_axes[1].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
 
-    # export as png format
-    plt.savefig('covid19.png', format='png')
+    # export by given format
+    plt.savefig('covid19.%s' % options['format'], format=options['format'])
     # show the window with the result
     plt.show()
 

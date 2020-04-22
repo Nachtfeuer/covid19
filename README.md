@@ -47,6 +47,9 @@ Options:
                               Germany]
   -f, --format [png|svg|jpg]  File format for image.  [default: png]
   --viewer / --no-viewer      Show/hide the viewer.  [default: True]
+  --initial-cases INTEGER     Ignoring intial cases less than than given value
+                              for visualization (totals are not affected)
+                              [default: 0]
   --help                      Show this message and exit.
 ```
 

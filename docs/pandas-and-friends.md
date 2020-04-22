@@ -80,12 +80,12 @@ the other plot. Some notes:
  - A plot gives access to the axes and can be used to adjust labels for X and Y.
 
 ```python
-title = 'Corona Infizierte in Deutschland (Insgesamt: %d)' % df_concrete['cases'].sum()
+title = 'Corona Cases in Germany (Total: %d)' % df_concrete['cases'].sum()
 axes = df_concrete.plot(x='dateRep', y='cases', title=title,
                        ax=main_axes[0],
                        kind='line', grid=True, color='#008000', legend=False)
-axes.set_xlabel('Datum')
-axes.set_ylabel('Infizierte pro Tag')
+axes.set_xlabel('Date')
+axes.set_ylabel('Cases Per Day')
 ```
 
 ## Trend line

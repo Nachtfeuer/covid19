@@ -52,6 +52,9 @@ def initialize_logging():
               help="File format for image.")
 @click.option('--viewer/--no-viewer', default=True, show_default=True,
               help="Show/hide the viewer.")
+@click.option('--initial-cases', default=0, type=int, show_default=True,
+              help="Ignoring intial cases less than than given value" +
+                   " for visualization (totals are not affected)")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
     initialize_logging()
@@ -62,6 +65,7 @@ def main(**options):
     logging.info("country filter: %(country)s", options)
     logging.info("image format: %(format)s", options)
     logging.info("show viewer: %(viewer)s", options)
+    logging.info("initial cases: %(initial_cases)d", options)
 
     if not os.path.isfile("covid19.csv") or always:
         response = requests.get(url)
@@ -91,6 +95,14 @@ def main(**options):
     df_concrete = df_concrete.sort_values(by=['year', 'month', 'day'])
     df_concrete = df_concrete.reset_index(drop=True)
 
+    sum_of_cases = df_concrete['cases'].sum()
+    sum_of_deaths = df_concrete['deaths'].sum()
+
+    # allow to filter out rare cases at the beginning (default: take all)
+    # that's for visualizing in the graphs only
+    first_value_index = df_concrete.query('cases >= %d' % options['initial_cases']).index[0]
+    df_concrete = df_concrete.iloc[first_value_index:]
+
     fig, main_axes = plt.subplots(nrows=2, ncols=1, sharex=True)
     fig.suptitle(url, fontsize=8)
 
@@ -98,7 +110,7 @@ def main(**options):
     DPI = fig.get_dpi()
     fig.set_size_inches(options['width']/float(DPI), options['height']/float(DPI))
 
-    title = 'Corona Cases In %s (Total: %d)' % (country_filter, df_concrete['cases'].sum())
+    title = 'Corona Cases In %s (Total: %d)' % (country_filter, sum_of_cases)
     axes = df_concrete.plot(x='dateRep', y='cases', title=title,
                             ax=main_axes[0],
                             kind='line', grid=True, color='#008000', legend=False)
@@ -110,7 +122,7 @@ def main(**options):
     p = np.poly1d(np.polyfit(x, df_concrete['cases'].values.flatten(), 4))
     main_axes[0].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
 
-    title = 'Corona Deaths In %s (Total: %d)' % (country_filter, df_concrete['deaths'].sum())
+    title = 'Corona Deaths In %s (Total: %d)' % (country_filter, sum_of_deaths)
     axes = df_concrete.plot(x='dateRep', y='deaths', title=title,
                             ax=main_axes[1],
                             kind='line', grid=True, color='#008000', legend=False)

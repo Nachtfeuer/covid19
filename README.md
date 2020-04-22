@@ -7,7 +7,7 @@ seeing the snapshot of the day only and I were interested
 to the see the development from the past weeks and months
 until now for my own country.
 
-The final result looks like this:
+The final result looks like this (depending on the options you have choosen):
 
 ![](docs/images/covid19.png)
 
@@ -20,7 +20,7 @@ libraries installed:
 pip install requests numpy pandas matplotlib click
 ```
 
-With this you simply can run the script like this:
+With this you simply can run the script like this (depending on the options you have choosen):
 
 ```
 python visualize.py

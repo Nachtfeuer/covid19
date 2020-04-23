@@ -24,7 +24,7 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+from statsmodels.nonparametric.kernel_regression import KernelReg
 
 def initialize_logging():
     """Initializing the logging (file and console)"""
@@ -78,19 +78,29 @@ def main(**options):
     country_filter = options['country'].lower()
     countries = set(country for country in df['countriesAndTerritories'])
 
-    found = False
-    for pos, country in enumerate(countries):
-        if country.lower() == country_filter:
-            country_filter = country
-            found = True
-            break
+    if not country_filter == 'all':
+        found = False
+        for pos, country in enumerate(countries):
+            if country.lower() == country_filter:
+                country_filter = country
+                found = True
+                break
 
-    if not found:
-        logging.error("Country '%s' not found!", options['country'])
-        sys.exit(1)
+        if not found:
+            logging.error("Country '%s' not found!", options['country'])
+            sys.exit(1)
 
-    # filter for concrete country
-    df_concrete = df[df.countriesAndTerritories.eq(country_filter)]
+    if country_filter == 'all':
+        # all countries ... we have to aggregate cases and deaths per day
+        df_concrete = df.groupby('dateRep').agg({
+            'cases': ['sum'], 'deaths': ['sum'],
+            'year': ['min'], 'month': ['min'], 'day': ['min'], 'dateRep': ['min']
+        })
+        df_concrete.columns = ['cases', 'deaths', 'year', 'month', 'day', 'dateRep']
+    else:
+        # filter for concrete country
+        df_concrete = df[df.countriesAndTerritories.eq(country_filter)]
+
     # sort by date ascending
     df_concrete = df_concrete.sort_values(by=['year', 'month', 'day'])
     df_concrete = df_concrete.reset_index(drop=True)
@@ -111,7 +121,8 @@ def main(**options):
     DPI = fig.get_dpi()
     fig.set_size_inches(options['width']/float(DPI), options['height']/float(DPI))
 
-    title = 'Corona Cases In %s (Total since %s: %d)' % (country_filter, first_day, sum_of_cases)
+    country = country_filter if not country_filter == 'all' else 'All Countries'
+    title = 'Corona Cases In %s (Total since %s: %d)' % (country, first_day, sum_of_cases)
     axes = df_concrete.plot(x='dateRep', y='cases', title=title,
                             ax=main_axes[0],
                             kind='line', grid=True, color='#008000', legend=False)
@@ -123,7 +134,7 @@ def main(**options):
     p = np.poly1d(np.polyfit(x, df_concrete['cases'].values.flatten(), 4))
     main_axes[0].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
 
-    title = 'Corona Deaths In %s (Total since %s: %d)' % (country_filter, first_day, sum_of_deaths)
+    title = 'Corona Deaths In %s (Total since %s: %d)' % (country, first_day, sum_of_deaths)
     axes = df_concrete.plot(x='dateRep', y='deaths', title=title,
                             ax=main_axes[1],
                             kind='line', grid=True, color='#008000', legend=False)

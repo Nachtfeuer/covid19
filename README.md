@@ -17,7 +17,7 @@ The whole thing is written in Python 3. You require to have some
 libraries installed:
 
 ```
-pip install requests numpy pandas matplotlib click statsmodels
+pip install requests numpy pandas matplotlib click
 ```
 
 With this you simply can run the script like this (depending on the options you have choosen):

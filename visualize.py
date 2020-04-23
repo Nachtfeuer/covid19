@@ -24,20 +24,145 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from statsmodels.nonparametric.kernel_regression import KernelReg
 
-def initialize_logging():
-    """Initializing the logging (file and console)"""
-    format = '%(asctime)s - %(levelname)s - %(message)s'
-    # file based logging
-    logging.basicConfig(filename='visualize.log', level=logging.INFO, format=format)
-    # adding console based logging
-    consoleLogger = logging.StreamHandler()
-    consoleLogger.setFormatter(logging.Formatter(format))
-    logging.getLogger().addHandler(consoleLogger)
-    # basic information at beginning (Python and platform)
-    logging.info("Python %s", sys.version)
-    logging.info("Platform %s", platform.platform())
+
+class Application:
+    """Application for visualizing Corona data."""
+
+    DATA_URL = "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
+
+    def __init__(self, options):
+        """Initialize application with command line options."""
+        self.options = options
+        self.use_cache = False
+        self.df = None
+        self.df_concrete = None
+        self.country_filter = self.options['country'].lower()
+
+    @staticmethod
+    def initialize_logging():
+        """Initializing the logging (file and console)"""
+        format = '%(asctime)s - %(levelname)s - %(message)s'
+        # file based logging
+        logging.basicConfig(filename='visualize.log', level=logging.INFO, format=format)
+        # adding console based logging
+        consoleLogger = logging.StreamHandler()
+        consoleLogger.setFormatter(logging.Formatter(format))
+        logging.getLogger().addHandler(consoleLogger)
+        # basic information at beginning (Python and platform)
+        logging.info("Python %s", sys.version)
+        logging.info("Platform %s", platform.platform())
+
+    def log_options(self):
+        logging.info("data url: %s", Application.DATA_URL)
+        logging.info("image resolution: %(width)dx%(height)d pixel", self.options)
+        logging.info("country filter: %(country)s", self.options)
+        logging.info("image format: %(format)s", self.options)
+        logging.info("show viewer: %(viewer)s", self.options)
+        logging.info("initial cases: %(initial_cases)d", self.options)
+
+    def fetch_data(self):
+        """Download Corona Data."""
+        if not os.path.isfile("covid19.csv") or not self.use_cache:
+            response = requests.get(Application.DATA_URL)
+            with open('covid19.csv', 'wb') as stream:
+                stream.write(response.content)
+
+        self.df = pd.read_csv('covid19.csv')
+
+    def provide_concrete_data(self):
+        # searching for the country defined in the options
+        countries = set(country for country in self.df['countriesAndTerritories'])
+
+        if not self.country_filter == 'all':
+            found = False
+            for pos, country in enumerate(countries):
+                if country.lower() == self.country_filter:
+                    self.country_filter = country
+                    found = True
+                    break
+
+            if not found:
+                logging.error("Country '%(country)s' not found!", self.options)
+                sys.exit(1)
+
+        if self.country_filter == 'all':
+            # all countries ... we have to aggregate cases and deaths per day
+            self.df_concrete = self.df.groupby('dateRep').agg({
+                'cases': ['sum'], 'deaths': ['sum'],
+                'year': ['min'], 'month': ['min'], 'day': ['min'], 'dateRep': ['min']
+            })
+            self.df_concrete.columns = ['cases', 'deaths', 'year', 'month', 'day', 'dateRep']
+        else:
+            # filter for concrete country
+            self.df_concrete = self.df[self.df.countriesAndTerritories.eq(self.country_filter)]
+
+        # sort by date ascending
+        self.df_concrete = self.df_concrete.sort_values(by=['year', 'month', 'day'])
+        self.df_concrete = self.df_concrete.reset_index(drop=True)
+
+    def configure_subplots(self):
+        """Define layout, main title and resolution of image."""
+        fig, main_axes = plt.subplots(nrows=2, ncols=1, sharex=True)
+        fig.suptitle(Application.DATA_URL, fontsize=8)
+
+        # adjusting figure to show in requested resolution (default: 1024x768 pixel)
+        DPI = fig.get_dpi()
+        fig.set_size_inches(self.options['width']/float(DPI), self.options['height']/float(DPI))
+        return fig, main_axes
+
+    def visualize(self):
+        """Plotting the data."""
+        first_day = self.df_concrete['dateRep'].values.flatten()[0]
+        sum_of_cases = self.df_concrete['cases'].sum()
+        sum_of_deaths = self.df_concrete['deaths'].sum()
+
+        # allow to filter out rare cases at the beginning (default: take all)
+        # that's for visualizing in the graphs only
+        first_value_index = self.df_concrete.query(
+            'cases >= %d' % self.options['initial_cases']).index[0]
+        self.df_concrete = self.df_concrete.iloc[first_value_index:]
+
+        fig, main_axes = self.configure_subplots()
+
+        country = self.country_filter if not self.country_filter == 'all' else 'All Countries'
+        title = 'Corona Cases In %s (Total since %s: %d)' % (country, first_day, sum_of_cases)
+        axes = self.df_concrete.plot(x='dateRep', y='cases', title=title,
+                                     ax=main_axes[0],
+                                     kind='line', grid=True, color='#008000', legend=False)
+        axes.set_xlabel('Date')
+        axes.set_ylabel('Cases Per Day')
+
+        # square polynomial fit for Corona cases
+        x = np.arange(self.df_concrete['dateRep'].values.flatten().shape[0])
+        p = np.poly1d(np.polyfit(x, self.df_concrete['cases'].values.flatten(), 4))
+        main_axes[0].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
+
+        title = 'Corona Deaths In %s (Total since %s: %d)' % (country, first_day, sum_of_deaths)
+        axes = self.df_concrete.plot(x='dateRep', y='deaths', title=title,
+                                     ax=main_axes[1],
+                                     kind='line', grid=True, color='#008000', legend=False)
+        axes.set_xlabel('Date')
+        axes.set_ylabel('Deaths Per Day')
+
+        # square polynomial fit for Corona deaths
+        p = np.poly1d(np.polyfit(x, self.df_concrete['deaths'].values.flatten(), 4))
+        main_axes[1].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
+
+        # export by given format
+        plt.savefig('covid19.%s' % self.options['format'], format=self.options['format'])
+
+        if self.options['viewer']:
+            # show the window with the result
+            plt.show()
+
+    def run(self):
+        """Running the application logic."""
+        Application.initialize_logging()
+        self.log_options()
+        self.fetch_data()
+        self.provide_concrete_data()
+        self.visualize()
 
 
 @click.command()
@@ -57,100 +182,8 @@ def initialize_logging():
                    " for visualization (totals are not affected)")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
-    initialize_logging()
-    always = True
-    url = "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
-    logging.info("data url: %s", url)
-    logging.info("image resolution: %(width)dx%(height)d pixel", options)
-    logging.info("country filter: %(country)s", options)
-    logging.info("image format: %(format)s", options)
-    logging.info("show viewer: %(viewer)s", options)
-    logging.info("initial cases: %(initial_cases)d", options)
-
-    if not os.path.isfile("covid19.csv") or always:
-        response = requests.get(url)
-        with open('covid19.csv', 'wb') as stream:
-            stream.write(response.content)
-
-    df = pd.read_csv('covid19.csv')
-
-    # searching for the country defined in the options
-    country_filter = options['country'].lower()
-    countries = set(country for country in df['countriesAndTerritories'])
-
-    if not country_filter == 'all':
-        found = False
-        for pos, country in enumerate(countries):
-            if country.lower() == country_filter:
-                country_filter = country
-                found = True
-                break
-
-        if not found:
-            logging.error("Country '%s' not found!", options['country'])
-            sys.exit(1)
-
-    if country_filter == 'all':
-        # all countries ... we have to aggregate cases and deaths per day
-        df_concrete = df.groupby('dateRep').agg({
-            'cases': ['sum'], 'deaths': ['sum'],
-            'year': ['min'], 'month': ['min'], 'day': ['min'], 'dateRep': ['min']
-        })
-        df_concrete.columns = ['cases', 'deaths', 'year', 'month', 'day', 'dateRep']
-    else:
-        # filter for concrete country
-        df_concrete = df[df.countriesAndTerritories.eq(country_filter)]
-
-    # sort by date ascending
-    df_concrete = df_concrete.sort_values(by=['year', 'month', 'day'])
-    df_concrete = df_concrete.reset_index(drop=True)
-
-    first_day = df_concrete['dateRep'].values.flatten()[0]
-    sum_of_cases = df_concrete['cases'].sum()
-    sum_of_deaths = df_concrete['deaths'].sum()
-
-    # allow to filter out rare cases at the beginning (default: take all)
-    # that's for visualizing in the graphs only
-    first_value_index = df_concrete.query('cases >= %d' % options['initial_cases']).index[0]
-    df_concrete = df_concrete.iloc[first_value_index:]
-
-    fig, main_axes = plt.subplots(nrows=2, ncols=1, sharex=True)
-    fig.suptitle(url, fontsize=8)
-
-    # adjusting figure to show in requested resolution (default: 1024x768 pixel)
-    DPI = fig.get_dpi()
-    fig.set_size_inches(options['width']/float(DPI), options['height']/float(DPI))
-
-    country = country_filter if not country_filter == 'all' else 'All Countries'
-    title = 'Corona Cases In %s (Total since %s: %d)' % (country, first_day, sum_of_cases)
-    axes = df_concrete.plot(x='dateRep', y='cases', title=title,
-                            ax=main_axes[0],
-                            kind='line', grid=True, color='#008000', legend=False)
-    axes.set_xlabel('Date')
-    axes.set_ylabel('Cases Per Day')
-
-    # square polynomial fit for Corona cases
-    x = np.arange(df_concrete['dateRep'].values.flatten().shape[0])
-    p = np.poly1d(np.polyfit(x, df_concrete['cases'].values.flatten(), 4))
-    main_axes[0].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
-
-    title = 'Corona Deaths In %s (Total since %s: %d)' % (country, first_day, sum_of_deaths)
-    axes = df_concrete.plot(x='dateRep', y='deaths', title=title,
-                            ax=main_axes[1],
-                            kind='line', grid=True, color='#008000', legend=False)
-    axes.set_xlabel('Date')
-    axes.set_ylabel('Deaths Per Day')
-
-    # square polynomial fit for Corona deaths
-    p = np.poly1d(np.polyfit(x, df_concrete['deaths'].values.flatten(), 4))
-    main_axes[1].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
-
-    # export by given format
-    plt.savefig('covid19.%s' % options['format'], format=options['format'])
-
-    if options['viewer']:
-        # show the window with the result
-        plt.show()
+    application = Application(options)
+    application.run()
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@
 Also I have used the RSS feed from RKI I always have been
 seeing the snapshot of the day only and I were interested
 to the see the development from the past weeks and months
-until now for my own country.
+until now for my own country (as default).
 
 The final result looks like this (depending on the options you have choosen):
 
@@ -56,7 +56,11 @@ Options:
   --help                      Show this message and exit.
 ```
 
-Hint: The default for cache file looks (of course) on your machine differently.
+Hints:
+
+ - The default for cache file looks (of course) on your machine differently.
+ - you can define **--country=all** to the see aggregated data for
+   all countries.
 
 ## Links
 

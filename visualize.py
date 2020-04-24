@@ -24,6 +24,7 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from io import StringIO
 
 
 class Application:
@@ -34,7 +35,6 @@ class Application:
     def __init__(self, options):
         """Initialize application with command line options."""
         self.options = options
-        self.use_cache = False
         self.df = None
         self.df_concrete = None
         self.country_filter = self.options['country'].lower()
@@ -60,15 +60,23 @@ class Application:
         logging.info("image format: %(format)s", self.options)
         logging.info("show viewer: %(viewer)s", self.options)
         logging.info("initial cases: %(initial_cases)d", self.options)
+        logging.info("use cache: %(cache)s", self.options)
+        logging.info("cache file: %(cache_file)s", self.options)
 
     def fetch_data(self):
         """Download Corona Data."""
-        if not os.path.isfile("covid19.csv") or not self.use_cache:
-            response = requests.get(Application.DATA_URL)
-            with open('covid19.csv', 'wb') as stream:
-                stream.write(response.content)
+        if self.options['cache']:
+            if not os.path.isfile(self.options['cache_file']):
+                logging.info("Downloading from %s", Application.DATA_URL)
+                response = requests.get(Application.DATA_URL)
+                with open(self.options['cache_file'], 'wb') as stream:
+                    stream.write(response.content)
 
-        self.df = pd.read_csv('covid19.csv')
+            self.df = pd.read_csv(self.options['cache_file'])
+        else:
+            logging.info("Downloading from %s", Application.DATA_URL)
+            response = requests.get(Application.DATA_URL)
+            self.df = pd.read_csv(StringIO(response.content.decode()))
 
     def provide_concrete_data(self):
         # searching for the country defined in the options
@@ -170,7 +178,8 @@ class Application:
               help="Width in pixels for the image.")
 @click.option('--height', '-h', default=768, type=int, show_default=True,
               help="Height in pixels for the image.")
-@click.option('--country', '-c', default='Germany', type=str, show_default=True,
+@click.option('--country', '-c', default='Germany',
+              type=str, show_default=True, metavar="<NAME>",
               help="Country as filter for the data.")
 @click.option('--format', '-f', default='png', type=click.Choice(['png', 'svg', 'jpg']),
               show_default=True,
@@ -180,6 +189,11 @@ class Application:
 @click.option('--initial-cases', default=0, type=int, show_default=True,
               help="Ignoring intial cases less than than given value" +
                    " for visualization (totals are not affected)")
+@click.option('--cache/--no-cache', default=False, show_default=True,
+              help="Enable/Diable the cache.")
+@click.option('--cache-file', default=os.path.join(os.getcwd(), 'covid19.csv'),
+              type=str, show_default=True, metavar="<PATH>",
+              help="Path and filename of the cache file.")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
     application = Application(options)

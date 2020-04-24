@@ -28,9 +28,9 @@ python visualize.py
 
 Running this script a file **covid19.csv** is generated and
 a file **covid19.png** is generated. In addition the viewer
-is started showing you the results:
+is started showing you same image where you can do some
+operation like zooming into the data.
 
-![](docs/images/viewer.png)
 
 The tool also provides command line options:
 
@@ -43,15 +43,20 @@ Usage: visualize.py [OPTIONS]
 Options:
   -w, --width INTEGER         Width in pixels for the image.  [default: 1024]
   -h, --height INTEGER        Height in pixels for the image.  [default: 768]
-  -c, --country TEXT          Country as filter for the data.  [default:
+  -c, --country <NAME>        Country as filter for the data.  [default:
                               Germany]
   -f, --format [png|svg|jpg]  File format for image.  [default: png]
   --viewer / --no-viewer      Show/hide the viewer.  [default: True]
   --initial-cases INTEGER     Ignoring intial cases less than than given value
                               for visualization (totals are not affected)
                               [default: 0]
+  --cache / --no-cache        Enable/Diable the cache.  [default: False]
+  --cache-file <PATH>         Path and filename of the cache file.  [default:
+                              D:\Programmierung\covid19\covid19.csv]
   --help                      Show this message and exit.
 ```
+
+Hint: The default for cache file looks (of course) on your machine differently.
 
 ## Links
 

@@ -67,3 +67,4 @@ Hints:
  - https://opendata.ecdc.europa.eu/covid19/casedistribution/csv
  - https://www.rki.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_nCoV.xml
  - Used libraries (documention in this repository) [here](docs/pandas-and-friends.md)
+

@@ -131,17 +131,21 @@ class Application:
         country = self.country_filter if not self.country_filter == 'all' else 'All Countries'
         title = 'Corona %s In %s (Total since %s: %d)' % \
             (name.title(), country, self.first_day, total)
-        axes = self.df_concrete.plot(x='dateRep', y=name, title=title,
-                                     ax=target,
-                                     kind='line', grid=True, color='#008000', legend=False)
-        axes.set_xlabel('Date')
-        axes.set_ylabel('%s Per Day' % name.title())
-        axes.tick_params(labelleft=True, labelright=True)
+        self.df_concrete.plot(x='dateRep', y=name, title=title,
+                              ax=target,
+                              kind='line', grid=False, color='#008000', legend=False)
 
         # square polynomial fit for Corona cases
         x = np.arange(self.df_concrete['dateRep'].values.flatten().shape[0])
         p = np.poly1d(np.polyfit(x, self.df_concrete[name].values.flatten(), 4))
-        target.plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
+        target.plot(x, p(x), label='squares polynomial fit',
+                    linestyle='dashed', linewidth=0.75, color='#800000')
+
+        target.set_xlabel('Date')
+        target.set_ylabel('%s Per Day' % name.title())
+        target.tick_params(labelleft=True, labelright=True)
+        target.grid(alpha=0.5)
+        target.legend(loc='upper left')
 
     def visualize(self):
         """Plotting the data."""

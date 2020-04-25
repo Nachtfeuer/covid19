@@ -125,3 +125,4 @@ plt.show()
 
  - https://requests.readthedocs.io/en/master/
  - https://click.palletsprojects.com/en/7.x/
+ - https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html?highlight=polyfit#numpy.polyfit

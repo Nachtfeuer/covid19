@@ -130,10 +130,10 @@ class Application:
         """Plotting concrete data and the relating trend line."""
         country = self.country_filter if not self.country_filter == 'all' else 'All Countries'
         title = 'Corona %s In %s (Total since %s: %d)' % \
-            (name.title(), country, self.first_day, total)
+            (name.title(), country.title(), self.first_day, total)
         self.df_concrete.plot(x='dateRep', y=name, title=title,
-                              ax=target,
-                              kind='line', grid=False, color='#008000', legend=False)
+                              ax=target, kind='line',
+                              grid=False, color='#008000', legend=False)
 
         # square polynomial fit for Corona cases
         x = np.arange(self.df_concrete['dateRep'].values.flatten().shape[0])

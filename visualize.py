@@ -83,17 +83,9 @@ class Application:
 
     def provide_concrete_data(self):
         # searching for the country defined in the options
-        countries = set(country for country in self.df['countriesAndTerritories'])
-
         if not self.country_filter == 'all':
-            found = False
-            for pos, country in enumerate(countries):
-                if country.lower() == self.country_filter:
-                    self.country_filter = country
-                    found = True
-                    break
-
-            if not found:
+            if not any(self.df.countriesAndTerritories.str.lower().eq(
+                       self.country_filter).values.flatten()):
                 logging.error("Country '%(country)s' not found!", self.options)
                 sys.exit(1)
 
@@ -106,7 +98,8 @@ class Application:
             self.df_concrete.columns = ['cases', 'deaths', 'year', 'month', 'day', 'dateRep']
         else:
             # filter for concrete country
-            self.df_concrete = self.df[self.df.countriesAndTerritories.eq(self.country_filter)]
+            self.df_concrete = self.df[
+                self.df.countriesAndTerritories.str.lower().eq(self.country_filter)]
 
         # sort by date ascending
         self.df_concrete = self.df_concrete.sort_values(by=['year', 'month', 'day'])

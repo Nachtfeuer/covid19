@@ -57,6 +57,7 @@ class Application:
         logging.info("Platform %s", platform.platform())
 
     def log_options(self):
+        """Logging of the options."""
         logging.info("data url: %s", Application.DATA_URL)
         logging.info("image resolution: %(width)dx%(height)d pixel", self.options)
         logging.info("country filter: %(country)s", self.options)
@@ -105,16 +106,16 @@ class Application:
         self.df_concrete = self.df_concrete.sort_values(by=['year', 'month', 'day'])
         self.df_concrete = self.df_concrete.reset_index(drop=True)
 
+        # some information required for all graphs
+        self.first_day = self.df_concrete['dateRep'].values.flatten()[0]
+        self.sum_of_cases = self.df_concrete['cases'].sum()
+        self.sum_of_deaths = self.df_concrete['deaths'].sum()
+
         # allow to filter out rare cases at the beginning (default: take all)
         # that's for visualizing in the graphs only
         first_value_index = self.df_concrete.query(
             'cases >= %d' % self.options['initial_cases']).index[0]
         self.df_concrete = self.df_concrete.iloc[first_value_index:]
-
-        # some information required for all graphs
-        self.first_day = self.df_concrete['dateRep'].values.flatten()[0]
-        self.sum_of_cases = self.df_concrete['cases'].sum()
-        self.sum_of_deaths = self.df_concrete['deaths'].sum()
 
     def configure_subplots(self):
         """Define layout, main title and resolution of image."""

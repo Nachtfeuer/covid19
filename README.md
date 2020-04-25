@@ -1,6 +1,6 @@
 # Welcome to the Python based visualization for covid19 data
 
-[![Build Status](https://travis-ci.org/Nachtfeuer/travis19.svg?branch=master)](https://travis-ci.org/Nachtfeuer/covid19)
+[![Build Status](https://travis-ci.org/Nachtfeuer/covid19.svg?branch=master)](https://travis-ci.org/Nachtfeuer/covid19)
 
 ## Purpose
 

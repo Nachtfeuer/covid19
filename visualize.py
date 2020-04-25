@@ -38,6 +38,9 @@ class Application:
         self.df = None
         self.df_concrete = None
         self.country_filter = self.options['country'].lower()
+        self.first_day = None
+        self.sum_of_cases = None
+        self.sum_of_deaths = None
 
     @staticmethod
     def initialize_logging():
@@ -109,6 +112,17 @@ class Application:
         self.df_concrete = self.df_concrete.sort_values(by=['year', 'month', 'day'])
         self.df_concrete = self.df_concrete.reset_index(drop=True)
 
+        # allow to filter out rare cases at the beginning (default: take all)
+        # that's for visualizing in the graphs only
+        first_value_index = self.df_concrete.query(
+            'cases >= %d' % self.options['initial_cases']).index[0]
+        self.df_concrete = self.df_concrete.iloc[first_value_index:]
+
+        # some information required for all graphs
+        self.first_day = self.df_concrete['dateRep'].values.flatten()[0]
+        self.sum_of_cases = self.df_concrete['cases'].sum()
+        self.sum_of_deaths = self.df_concrete['deaths'].sum()
+
     def configure_subplots(self):
         """Define layout, main title and resolution of image."""
         fig, main_axes = plt.subplots(nrows=2, ncols=1, sharex=True)
@@ -119,43 +133,28 @@ class Application:
         fig.set_size_inches(self.options['width']/float(DPI), self.options['height']/float(DPI))
         return fig, main_axes
 
-    def visualize(self):
-        """Plotting the data."""
-        first_day = self.df_concrete['dateRep'].values.flatten()[0]
-        sum_of_cases = self.df_concrete['cases'].sum()
-        sum_of_deaths = self.df_concrete['deaths'].sum()
-
-        # allow to filter out rare cases at the beginning (default: take all)
-        # that's for visualizing in the graphs only
-        first_value_index = self.df_concrete.query(
-            'cases >= %d' % self.options['initial_cases']).index[0]
-        self.df_concrete = self.df_concrete.iloc[first_value_index:]
-
-        fig, main_axes = self.configure_subplots()
-
+    def plot(self, target, name, total):
+        """Plotting concrete data and the relating trend line."""
         country = self.country_filter if not self.country_filter == 'all' else 'All Countries'
-        title = 'Corona Cases In %s (Total since %s: %d)' % (country, first_day, sum_of_cases)
-        axes = self.df_concrete.plot(x='dateRep', y='cases', title=title,
-                                     ax=main_axes[0],
+        title = 'Corona %s In %s (Total since %s: %d)' % \
+            (name.title(), country, self.first_day, total)
+        axes = self.df_concrete.plot(x='dateRep', y=name, title=title,
+                                     ax=target,
                                      kind='line', grid=True, color='#008000', legend=False)
         axes.set_xlabel('Date')
-        axes.set_ylabel('Cases Per Day')
+        axes.set_ylabel('%s Per Day' % name.title())
 
         # square polynomial fit for Corona cases
         x = np.arange(self.df_concrete['dateRep'].values.flatten().shape[0])
-        p = np.poly1d(np.polyfit(x, self.df_concrete['cases'].values.flatten(), 4))
-        main_axes[0].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
+        p = np.poly1d(np.polyfit(x, self.df_concrete[name].values.flatten(), 4))
+        target.plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
 
-        title = 'Corona Deaths In %s (Total since %s: %d)' % (country, first_day, sum_of_deaths)
-        axes = self.df_concrete.plot(x='dateRep', y='deaths', title=title,
-                                     ax=main_axes[1],
-                                     kind='line', grid=True, color='#008000', legend=False)
-        axes.set_xlabel('Date')
-        axes.set_ylabel('Deaths Per Day')
+    def visualize(self):
+        """Plotting the data."""
+        fig, main_axes = self.configure_subplots()
 
-        # square polynomial fit for Corona deaths
-        p = np.poly1d(np.polyfit(x, self.df_concrete['deaths'].values.flatten(), 4))
-        main_axes[1].plot(x, p(x), linestyle='dashed', linewidth=0.75, color='#800000')
+        self.plot(main_axes[0], 'cases', self.sum_of_cases)
+        self.plot(main_axes[1], 'deaths', self.sum_of_deaths)
 
         # export by given format
         plt.savefig('covid19.%s' % self.options['format'], format=self.options['format'])

@@ -136,6 +136,7 @@ class Application:
                                      kind='line', grid=True, color='#008000', legend=False)
         axes.set_xlabel('Date')
         axes.set_ylabel('%s Per Day' % name.title())
+        axes.tick_params(labelleft=True, labelright=True)
 
         # square polynomial fit for Corona cases
         x = np.arange(self.df_concrete['dateRep'].values.flatten().shape[0])

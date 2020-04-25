@@ -1,5 +1,7 @@
 # Welcome to the Python based visualization for covid19 data
 
+[![Build Status](https://travis-ci.org/Nachtfeuer/travis19.svg?branch=master)](https://travis-ci.org/Nachtfeuer/covid19)
+
 ## Purpose
 
 Also I have used the RSS feed from RKI I always have been

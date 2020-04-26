@@ -68,7 +68,7 @@ class Application:
         logging.info("cache file: %(cache_file)s", self.options)
 
     def fetch_data(self):
-        """Download Corona Data."""
+        """Download Corona Data (or use the cache)."""
         if self.options['cache']:
             if not os.path.isfile(self.options['cache_file']):
                 logging.info("Downloading from %s", Application.DATA_URL)
@@ -156,7 +156,8 @@ class Application:
         self.plot(main_axes[1], 'deaths', self.sum_of_deaths)
 
         # export by given format
-        plt.savefig('covid19.%s' % self.options['format'], format=self.options['format'])
+        for format in self.options['format']:
+            plt.savefig('covid19.%s' % format, format=format)
 
         if self.options['viewer']:
             # show the window with the result
@@ -179,8 +180,8 @@ class Application:
 @click.option('--country', '-c', default='Germany',
               type=str, show_default=True, metavar="<NAME>",
               help="Country as filter for the data.")
-@click.option('--format', '-f', default='png', type=click.Choice(['png', 'svg', 'jpg']),
-              show_default=True,
+@click.option('--format', '-f', default=['png'], type=click.Choice(['png', 'svg', 'jpg']),
+              show_default=True, multiple=True,
               help="File format for image.")
 @click.option('--viewer/--no-viewer', default=True, show_default=True,
               help="Show/hide the viewer.")

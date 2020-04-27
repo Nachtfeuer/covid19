@@ -91,23 +91,39 @@ class Application:
                 sys.exit(1)
 
         if self.country_filter == 'all':
-            # all countries ... we have to aggregate cases and deaths per day
-            self.df_concrete = self.df.groupby('dateRep').agg({
-                'cases': ['sum'], 'deaths': ['sum'],
-                'year': ['min'], 'month': ['min'], 'day': ['min'], 'dateRep': ['min']
+            temp = self.df.groupby('dateRep').agg({
+                'cases': ['sum'], 'deaths': ['sum'], 'dateRep': ['min'],
+                'countriesAndTerritories': ['min']
             })
-            self.df_concrete.columns = ['cases', 'deaths', 'year', 'month', 'day', 'dateRep']
+            temp.columns = ['cases', 'deaths', 'dateRep', 'countriesAndTerritories']
+
+            data = {
+                'date': [pd.to_datetime(entry, format="%d/%m/%Y") for entry in temp['dateRep']],
+                'cases': temp['cases'].values.flatten(),
+                'deaths': temp['deaths'].values.flatten(),
+                'countriesAndTerritories': temp['countriesAndTerritories'].values.flatten()
+            }
         else:
+            data = {
+                'date': [pd.to_datetime(entry, format="%d/%m/%Y") for entry in self.df['dateRep']],
+                'cases': self.df['cases'].values.flatten(),
+                'deaths': self.df['deaths'].values.flatten(),
+                'countriesAndTerritories': self.df['countriesAndTerritories'].values.flatten()
+            }
+
+        self.df_concrete = pd.DataFrame(data)
+
+        if not self.country_filter == 'all':
             # filter for concrete country
-            self.df_concrete = self.df[
-                self.df.countriesAndTerritories.str.lower().eq(self.country_filter)]
+            self.df_concrete = self.df_concrete[
+                self.df_concrete.countriesAndTerritories.str.lower().eq(self.country_filter)]
 
         # sort by date ascending
-        self.df_concrete = self.df_concrete.sort_values(by=['year', 'month', 'day'])
+        self.df_concrete = self.df_concrete.sort_values(by=['date'])
         self.df_concrete = self.df_concrete.reset_index(drop=True)
 
         # some information required for all graphs
-        self.first_day = self.df_concrete['dateRep'].values.flatten()[0]
+        self.first_day = self.df_concrete['date'].values.flatten()[0]
         self.sum_of_cases = self.df_concrete['cases'].sum()
         self.sum_of_deaths = self.df_concrete['deaths'].sum()
 
@@ -129,19 +145,23 @@ class Application:
 
     def plot(self, target, name, total):
         """Plotting concrete data and the relating trend line."""
+        first_day_str = np.datetime_as_string(self.first_day, unit='D')
         country = self.country_filter if not self.country_filter == 'all' else 'All Countries'
         title = 'Corona %s In %s (Total since %s: %d)' % \
-            (name.title(), country.title(), self.first_day, total)
-        self.df_concrete.plot(x='dateRep', y=name, title=title,
-                              ax=target, kind='line',
-                              grid=False, color='#008000', legend=False)
+            (name.title(), country.title(), first_day_str, total)
+
+        # plot of the concrete data
+        x = self.df_concrete['date'].values.flatten()
+        target.plot(x, self.df_concrete[name].values.flatten(),
+                    label=name, color='#008000')
 
         # square polynomial fit for Corona cases
-        x = np.arange(self.df_concrete['dateRep'].values.flatten().shape[0])
-        p = np.poly1d(np.polyfit(x, self.df_concrete[name].values.flatten(), 4))
-        target.plot(x, p(x), label='squares polynomial fit',
+        xt = np.arange(len(x))
+        pt = np.poly1d(np.polyfit(xt, self.df_concrete[name].values.flatten(), 4))
+        target.plot(x, pt(xt), label='squares polynomial fit',
                     linestyle='dashed', linewidth=0.75, color='#800000')
 
+        target.set_title(title)
         target.set_xlabel('Date')
         target.set_ylabel('%s Per Day' % name.title())
         target.tick_params(labelleft=True, labelright=True)

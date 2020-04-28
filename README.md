@@ -45,9 +45,10 @@ Usage: visualize.py [OPTIONS]
 Options:
   -w, --width INTEGER         Width in pixels for the image.  [default: 1024]
   -h, --height INTEGER        Height in pixels for the image.  [default: 768]
-  -c, --country <NAME>        Country as filter for the data.  [default:
-                              Germany]
-  -f, --format [png|svg|jpg]  File format for image.  [default: png]
+  -c, --country <NAME>        Country as filter for the data (repeatable).
+                              [default: Germany]
+  -f, --format [png|svg|jpg]  File format for image (repeatable).  [default:
+                              png]
   --viewer / --no-viewer      Show/hide the viewer.  [default: True]
   --initial-cases INTEGER     Ignoring intial cases less than than given value
                               for visualization (totals are not affected)
@@ -63,6 +64,10 @@ Hints:
  - The default for cache file looks (of course) on your machine differently.
  - you can define **--country=all** to the see aggregated data for
    all countries.
+ - The **--image** parameter is repeatable; you can generate multiple output formats
+ - The **--country** parameter is repeatable; you can generate multiple images per
+   defined country. If you specify more than one countr the viewer is disabled for
+   the moment (issue #17 will resolve this soon).
 
 ## Links
 

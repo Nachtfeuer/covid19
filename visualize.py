@@ -36,11 +36,9 @@ class Application:
         """Initialize application with command line options."""
         self.options = options
         self.df = None
-        self.df_concrete = None
-        self.country_filter = self.options['country'].lower()
-        self.first_day = None
-        self.sum_of_cases = None
-        self.sum_of_deaths = None
+
+        if len(self.options['country']) > 1:
+            self.options['viewer'] = False
 
     @staticmethod
     def initialize_logging():
@@ -82,15 +80,15 @@ class Application:
             response = requests.get(Application.DATA_URL)
             self.df = pd.read_csv(StringIO(response.content.decode()))
 
-    def provide_concrete_data(self):
+    def provide_concrete_data(self, country_filter):
         # searching for the country defined in the options
-        if not self.country_filter == 'all':
+        if not country_filter == 'all':
             if not any(self.df.countriesAndTerritories.str.lower().eq(
-                       self.country_filter).values.flatten()):
-                logging.error("Country '%(country)s' not found!", self.options)
+                       country_filter).values.flatten()):
+                logging.error("Country '%s' not found!", country_filter)
                 sys.exit(1)
 
-        if self.country_filter == 'all':
+        if country_filter == 'all':
             temp = self.df.groupby('dateRep').agg({
                 'cases': ['sum'], 'deaths': ['sum'], 'dateRep': ['min'],
                 'countriesAndTerritories': ['min']
@@ -111,27 +109,29 @@ class Application:
                 'countriesAndTerritories': self.df['countriesAndTerritories'].values.flatten()
             }
 
-        self.df_concrete = pd.DataFrame(data)
+        df_concrete = pd.DataFrame(data)
 
-        if not self.country_filter == 'all':
+        if not country_filter == 'all':
             # filter for concrete country
-            self.df_concrete = self.df_concrete[
-                self.df_concrete.countriesAndTerritories.str.lower().eq(self.country_filter)]
+            df_concrete = df_concrete[
+                df_concrete.countriesAndTerritories.str.lower().eq(country_filter)]
 
         # sort by date ascending
-        self.df_concrete = self.df_concrete.sort_values(by=['date'])
-        self.df_concrete = self.df_concrete.reset_index(drop=True)
+        df_concrete = df_concrete.sort_values(by=['date'])
+        df_concrete = df_concrete.reset_index(drop=True)
 
         # some information required for all graphs
-        self.first_day = self.df_concrete['date'].values.flatten()[0]
-        self.sum_of_cases = self.df_concrete['cases'].sum()
-        self.sum_of_deaths = self.df_concrete['deaths'].sum()
+        first_day = df_concrete['date'].values.flatten()[0]
+        sum_of_cases = df_concrete['cases'].sum()
+        sum_of_deaths = df_concrete['deaths'].sum()
 
         # allow to filter out rare cases at the beginning (default: take all)
         # that's for visualizing in the graphs only
-        first_value_index = self.df_concrete.query(
+        first_value_index = df_concrete.query(
             'cases >= %d' % self.options['initial_cases']).index[0]
-        self.df_concrete = self.df_concrete.iloc[first_value_index:]
+        df_concrete = df_concrete.iloc[first_value_index:]
+
+        return df_concrete, first_day, sum_of_cases, sum_of_deaths
 
     def configure_subplots(self):
         """Define layout, main title and resolution of image."""
@@ -143,21 +143,21 @@ class Application:
         fig.set_size_inches(self.options['width']/float(DPI), self.options['height']/float(DPI))
         return fig, main_axes
 
-    def plot(self, target, name, total):
+    def plot(self, target, name, total, country_filter, df_concrete, first_day):
         """Plotting concrete data and the relating trend line."""
-        first_day_str = np.datetime_as_string(self.first_day, unit='D')
-        country = self.country_filter if not self.country_filter == 'all' else 'All Countries'
+        first_day_str = np.datetime_as_string(first_day, unit='D')
+        country = country_filter if not country_filter == 'all' else 'All Countries'
         title = 'Corona %s In %s (Total since %s: %d)' % \
             (name.title(), country.title(), first_day_str, total)
 
         # plot of the concrete data
-        x = self.df_concrete['date'].values.flatten()
-        target.plot(x, self.df_concrete[name].values.flatten(),
+        x = df_concrete['date'].values.flatten()
+        target.plot(x, df_concrete[name].values.flatten(),
                     label=name, color='#008000')
 
         # square polynomial fit for Corona cases
         xt = np.arange(len(x))
-        pt = np.poly1d(np.polyfit(xt, self.df_concrete[name].values.flatten(), 4))
+        pt = np.poly1d(np.polyfit(xt, df_concrete[name].values.flatten(), 4))
         target.plot(x, pt(xt), label='squares polynomial fit',
                     linestyle='dashed', linewidth=0.75, color='#800000')
 
@@ -168,16 +168,19 @@ class Application:
         target.grid(alpha=0.5)
         target.legend(loc='upper left')
 
-    def visualize(self):
+    def visualize(self, country_filter, data):
         """Plotting the data."""
+        df_concrete, first_day, sum_of_cases, sum_of_deaths = data
         fig, main_axes = self.configure_subplots()
 
-        self.plot(main_axes[0], 'cases', self.sum_of_cases)
-        self.plot(main_axes[1], 'deaths', self.sum_of_deaths)
+        self.plot(main_axes[0], 'cases', sum_of_cases, country_filter, df_concrete, first_day)
+        self.plot(main_axes[1], 'deaths', sum_of_deaths, country_filter, df_concrete, first_day)
 
         # export by given format
         for format in self.options['format']:
-            plt.savefig('covid19.%s' % format, format=format)
+            filename = 'covid19-%s.%s' % (country_filter, format)
+            logging.info("Generating %s" % filename)
+            plt.savefig(filename, format=format)
 
         if self.options['viewer']:
             # show the window with the result
@@ -188,8 +191,10 @@ class Application:
         Application.initialize_logging()
         self.log_options()
         self.fetch_data()
-        self.provide_concrete_data()
-        self.visualize()
+
+        for country in self.options['country']:
+            data = self.provide_concrete_data(country.lower())
+            self.visualize(country.lower(), data)
 
 
 @click.command()
@@ -197,12 +202,12 @@ class Application:
               help="Width in pixels for the image.")
 @click.option('--height', '-h', default=768, type=int, show_default=True,
               help="Height in pixels for the image.")
-@click.option('--country', '-c', default='Germany',
-              type=str, show_default=True, metavar="<NAME>",
-              help="Country as filter for the data.")
+@click.option('--country', '-c', default=['Germany'],
+              type=str, show_default=True, metavar="<NAME>", multiple=True,
+              help="Country as filter for the data (repeatable).")
 @click.option('--format', '-f', default=['png'], type=click.Choice(['png', 'svg', 'jpg']),
               show_default=True, multiple=True,
-              help="File format for image.")
+              help="File format for image (repeatable).")
 @click.option('--viewer/--no-viewer', default=True, show_default=True,
               help="Show/hide the viewer.")
 @click.option('--initial-cases', default=0, type=int, show_default=True,

@@ -5,7 +5,7 @@ rem ensure packages
 pip install -r requirements.txt
 
 rem Validating styleguide I
-flake8 --max-line-length=100 visualize.py
+flake8 --max-line-length=100 --ignore=E402 visualize.py
 if %ERRORLEVEL% gtr 0 Exit /B
 
 rem Validating styleguide II

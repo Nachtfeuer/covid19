@@ -243,6 +243,7 @@ class Application:
             # event loop (keeps application running)
             self.root.mainloop()
 
+
 @click.command()
 @click.option('--width', '-w', default=1024, type=int, show_default=True,
               help="Width in pixels for the image.")
@@ -257,7 +258,7 @@ class Application:
 @click.option('--viewer/--no-viewer', default=True, show_default=True,
               help="Show/hide the viewer.")
 @click.option('--initial-cases', default=0, type=int, show_default=True,
-              help="Ignoring intial cases less than than given value" +
+              help="Ignoring intial cases less than than given value" +  # noqa
                    " for visualization (totals are not affected)")
 @click.option('--cache/--no-cache', default=False, show_default=True,
               help="Enable/Diable the cache.")

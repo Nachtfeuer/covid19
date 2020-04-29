@@ -35,7 +35,7 @@ install:
     - pip -V
 
 script:
-    - flake8 --max-line-length=100 .
+    - flake8 --max-line-length=100 --ignore=E402 .
     - pylint --rcfile=pylint.rcfile .
     - bandit -r .
     - radon cc --show-complexity --min B .

@@ -21,10 +21,28 @@ import platform
 import logging
 import requests
 import click
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from io import StringIO
+
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+
+import tkinter as tk
+from tkinter import ttk
+
+
+class Page(tk.Frame):
+    """Each page displays one country."""
+
+    def __init__(self, parent, figure):
+        """Initialize page."""
+        super(Page, self).__init__(parent)
+        self.figure_canvas_agg = FigureCanvasTkAgg(figure, master=self)
+        self.figure_canvas_agg.get_tk_widget().pack(fill=tk.BOTH, expand=tk.YES)
+        self.figure_canvas_agg.draw()
 
 
 class Application:
@@ -36,9 +54,24 @@ class Application:
         """Initialize application with command line options."""
         self.options = options
         self.df = None
+        self.figures = []
+        self.root = None
+        self.notebook = None
 
-        if len(self.options['country']) > 1:
-            self.options['viewer'] = False
+        if self.options['viewer']:
+            self.root = tk.Tk()
+            self.root.title("Corona Data Visualization")
+            self.root.geometry('1024x768+50+50')
+            self.root.attributes('-alpha', 0.75)
+            self.root.protocol("WM_DELETE_WINDOW", self.on_destroy)
+            self.notebook = ttk.Notebook(self.root)
+            self.notebook.pack(fill=tk.BOTH, expand=tk.YES)
+
+    def on_destroy(self):
+        """Closing the application but before closing the figures."""
+        for figure in self.figures:
+            plt.close(figure)
+        self.root.destroy()
 
     @staticmethod
     def initialize_logging():
@@ -140,7 +173,8 @@ class Application:
 
         # adjusting figure to show in requested resolution (default: 1024x768 pixel)
         DPI = fig.get_dpi()
-        fig.set_size_inches(self.options['width']/float(DPI), self.options['height']/float(DPI))
+        fig.set_size_inches(self.options['width'] / float(DPI), self.options['height'] / float(DPI))
+
         return fig, main_axes
 
     def plot(self, target, name, total, country_filter, df_concrete, first_day):
@@ -182,20 +216,32 @@ class Application:
             logging.info("Generating %s" % filename)
             plt.savefig(filename, format=format)
 
-        if self.options['viewer']:
-            # show the window with the result
-            plt.show()
+        return fig
+
+    def add_page(self, country, figure):
+        """Adding one page to the notebook."""
+        page = Page(self.notebook, figure)
+        page.pack(fill=tk.BOTH, expand=tk.YES)
+        self.notebook.add(page, text=country.title())
 
     def run(self):
         """Running the application logic."""
         Application.initialize_logging()
+
         self.log_options()
         self.fetch_data()
 
         for country in self.options['country']:
             data = self.provide_concrete_data(country.lower())
-            self.visualize(country.lower(), data)
+            figure = self.visualize(country.lower(), data)
 
+            if self.options['viewer']:
+                self.figures.append(figure)
+                self.add_page(country.title(), figure)
+
+        if self.options['viewer']:
+            # event loop (keeps application running)
+            self.root.mainloop()
 
 @click.command()
 @click.option('--width', '-w', default=1024, type=int, show_default=True,

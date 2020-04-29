@@ -1,5 +1,5 @@
 covid19.csv
-covid19.png
+covid19*.png
 .pytest_cache/
 .benchmarks/
 __pycache__/

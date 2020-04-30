@@ -11,7 +11,7 @@ until now for my own country (as default).
 
 The final result looks like this (depending on the options you have choosen):
 
-![](docs/images/covid19.png)
+![](docs/images/covid19-germany.png)
 
 ## Quickstart
 

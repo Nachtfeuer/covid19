@@ -65,7 +65,7 @@ class Application:
             self.root = tk.Tk()
             self.root.title("Corona Data Visualization")
             self.root.geometry('1024x768+50+50')
-            self.root.attributes('-alpha', 0.75)
+            self.root.attributes('-alpha', self.options['transparency'])
             self.root.protocol("WM_DELETE_WINDOW", self.on_destroy)
             self.notebook = ttk.Notebook(self.root)
             self.notebook.pack(fill=tk.BOTH, expand=tk.YES)
@@ -100,6 +100,7 @@ class Application:
         logging.info("initial cases: %(initial_cases)d", self.options)
         logging.info("use cache: %(cache)s", self.options)
         logging.info("cache file: %(cache_file)s", self.options)
+        logging.info("transparency: %(transparency)g", self.options)
 
     def fetch_data(self):
         """Download Corona Data (or use the cache)."""
@@ -268,6 +269,8 @@ class Application:
 @click.option('--cache-file', default=os.path.join(os.getcwd(), 'covid19.csv'),
               type=str, show_default=True, metavar="<PATH>",
               help="Path and filename of the cache file.")
+@click.option('--transparency', '-a', default=0.8, type=click.FloatRange(0.5, 1.0),
+              show_default=True, help="Enables transparency for viewer")
 def main(**options):
     """Visualizing covid19 data with matplotlib, panda and numpy."""
     application = Application(options)

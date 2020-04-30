@@ -26,23 +26,10 @@ import pandas as pd
 from io import StringIO
 
 import matplotlib
-matplotlib.use("TkAgg")
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 import tkinter as tk
 from tkinter import ttk
-
-
-class Page(tk.Frame):
-    """Each page displays one country."""
-
-    def __init__(self, parent, figure):
-        """Initialize page."""
-        super(Page, self).__init__(parent)
-        self.figure_canvas_agg = FigureCanvasTkAgg(figure, master=self)
-        self.figure_canvas_agg.get_tk_widget().pack(fill=tk.BOTH, expand=tk.YES)
-        self.figure_canvas_agg.draw()
 
 
 class Application:
@@ -57,8 +44,24 @@ class Application:
         self.figures = []
         self.root = None
         self.notebook = None
+        self.page_class = None
 
         if self.options['viewer']:
+            matplotlib.use("TkAgg")
+            from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+            class Page(tk.Frame):
+                """Each page displays one country."""
+
+                def __init__(self, parent, figure):
+                    """Initialize page."""
+                    super(Page, self).__init__(parent)
+                    self.figure_canvas_agg = FigureCanvasTkAgg(figure, master=self)
+                    self.figure_canvas_agg.get_tk_widget().pack(fill=tk.BOTH, expand=tk.YES)
+                    self.figure_canvas_agg.draw()
+
+            self.page_class = Page
+
             self.root = tk.Tk()
             self.root.title("Corona Data Visualization")
             self.root.geometry('1024x768+50+50')
@@ -220,7 +223,7 @@ class Application:
 
     def add_page(self, country, figure):
         """Adding one page to the notebook."""
-        page = Page(self.notebook, figure)
+        page = self.page_class(self.notebook, figure)
         page.pack(fill=tk.BOTH, expand=tk.YES)
         self.notebook.add(page, text=country.title())
 

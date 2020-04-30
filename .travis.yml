@@ -39,7 +39,7 @@ script:
     - pylint --rcfile=pylint.rcfile .
     - bandit -r .
     - radon cc --show-complexity --min B .
-    - python visualize.py --no-viewer --initial-cases=4 --format=png --format=svg --format=jpg --country=germany --country=italy --country=france
+    - python visualize.py --no-viewer --initial-cases=4 --format=png --format=svg --country=germany --country=italy --country=france
 
 notifications:
     email:

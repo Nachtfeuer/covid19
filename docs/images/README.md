@@ -1,7 +1,7 @@
 # Welcome
 
 I'm trying to update those images more often but it's not guaranteed.
-You can use thhe tool to view the details for the countries you
+You can use the tool to view the details for the countries you
 are interested in or just create the images.`
 
 **Example:**

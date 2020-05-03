@@ -22,15 +22,15 @@ libraries installed:
 pip install requests numpy pandas matplotlib click
 ```
 
-With this you simply can run the script like this (depending on the options you have choosen):
+With this you simply can run the script like following (depending on the options you have choosen):
 
 ```
 python visualize.py
 ```
 
 Running this script a file **covid19.csv** is generated and
-a file **covid19.png** is generated. In addition the viewer
-is started showing you same image where you can do some
+a file **covid19-germany.png** is generated (you can generate for other countries as well).
+In addition the viewer is started showing you same image where you can do some
 operation like zooming into the data.
 
 
@@ -43,20 +43,25 @@ Usage: visualize.py [OPTIONS]
   Visualizing covid19 data with matplotlib, panda and numpy.
 
 Options:
-  -w, --width INTEGER         Width in pixels for the image.  [default: 1024]
-  -h, --height INTEGER        Height in pixels for the image.  [default: 768]
-  -c, --country <NAME>        Country as filter for the data (repeatable).
-                              [default: Germany]
-  -f, --format [png|svg|jpg]  File format for image (repeatable).  [default:
-                              png]
-  --viewer / --no-viewer      Show/hide the viewer.  [default: True]
-  --initial-cases INTEGER     Ignoring intial cases less than than given value
-                              for visualization (totals are not affected)
-                              [default: 0]
-  --cache / --no-cache        Enable/Diable the cache.  [default: False]
-  --cache-file <PATH>         Path and filename of the cache file.  [default:
-                              D:\Programmierung\covid19\covid19.csv]
-  --help                      Show this message and exit.
+  -w, --width INTEGER             Width in pixels for the image.  [default:
+                                  1024]
+  -h, --height INTEGER            Height in pixels for the image.  [default:
+                                  768]
+  -c, --country <NAME>            Country as filter for the data (repeatable).
+                                  [default: Germany]
+  -f, --format [png|svg|jpg]      File format for image (repeatable).
+                                  [default: png]
+  --viewer / --no-viewer          Show/hide the viewer.  [default: True]
+  --initial-cases INTEGER         Ignoring intial cases less than than given
+                                  value for visualization (totals are not
+                                  affected)  [default: 0]
+  --cache / --no-cache            Enable/Diable the cache.  [default: False]
+  --cache-file <PATH>             Path and filename of the cache file.
+                                  [default:
+                                  D:\Programmierung\covid19\covid19.csv]
+  -a, --transparency FLOAT RANGE  Enables transparency for viewer  [default:
+                                  0.8]
+  --help                          Show this message and exit.
 ```
 
 Hints:
@@ -68,6 +73,11 @@ Hints:
  - The **--country** parameter is repeatable; you can generate multiple images per
    defined country. If you specify more than one countr the viewer is disabled for
    the moment (issue #17 will resolve this soon).
+ - The initial cases is to hide the relative flat line at the beginning.
+   However the totals shown are still for the whole data.
+   I'm using --initial-cases=4 for the images.
+ - When using the viewer each country is shown in a separate tab.
+
 
 ## Links
 

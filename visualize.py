@@ -195,7 +195,7 @@ class Application:
 
         # square polynomial fit for Corona cases
         xt = np.arange(len(x))
-        pt = np.poly1d(np.polyfit(xt, df_concrete[name].values.flatten(), 4))
+        pt = np.poly1d(np.polyfit(xt, df_concrete[name].values.flatten(), 5))
         target.plot(x, pt(xt), label='squares polynomial fit',
                     linestyle='dashed', linewidth=0.75, color='#800000')
 

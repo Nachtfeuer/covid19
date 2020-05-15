@@ -111,7 +111,7 @@ class Application:
             data = {
                 'date': temp['date'].values.flatten(),
                 'bundlesland': temp['bundesland'].values.flatten(),
-                'county': temp['landkreis'].values.flatten(),
+                'landkreis': temp['landkreis'].values.flatten(),
                 'cases': temp['cases'].values.flatten(),
                 'deaths': temp['deaths'].values.flatten(),
             }
@@ -126,7 +126,7 @@ class Application:
             data = {
                 'date': temp['date'].values.flatten(),
                 'bundesland': temp['bundesland'].values.flatten(),
-                'county': temp['landkreis'].values.flatten(),
+                'landkreis': temp['landkreis'].values.flatten(),
                 'cases': temp['cases'].values.flatten(),
                 'deaths': temp['deaths'].values.flatten(),
             }
@@ -202,6 +202,7 @@ class Application:
         # export by given format
         for format in self.options['format']:
             filename = 'covid19-germany-%s.%s' % (filter_value, format)
+            filename = filename.replace(' ', '-')
             logging.info("Generating %s" % filename)
             plt.savefig(filename, format=format)
 

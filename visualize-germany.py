@@ -25,7 +25,6 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-import matplotlib
 import matplotlib.pyplot as plt
 
 
@@ -217,7 +216,7 @@ class Application:
 
         for filter_value in self.options['filter']:
             data = self.provide_concrete_data(filter_value.lower())
-            figure = self.visualize(filter_value.lower(), data)
+            self.visualize(filter_value.lower(), data)
 
 
 @click.command()

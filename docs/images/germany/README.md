@@ -7,7 +7,7 @@ you are interested in or just create the images.`
 **Example:**
 
 ```
-python ..\..\..\visualize-germany.py --cache --filter=bayern --filter=hessen
+python ..\..\..\visualize-germany.py --filter=bayern --filter=hessen
 ```
 
 **Please note**: You have to remove the JSON to update the cache.
@@ -19,7 +19,7 @@ You also can use the filter on "Landkreis":
 **Example:**
 
 ```
-python ..\..\..\visualize-germany.py --cache --filter=landkreis --filter="SK Darmstadt"
+python ..\..\..\visualize-germany.py --filter-by=landkreis --filter="SK Darmstadt"
 ```
 
 **Please note**: You have to remove the JSON to update the cache.

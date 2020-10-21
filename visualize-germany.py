@@ -196,6 +196,10 @@ class Application:
         df_concrete, first_day, sum_of_cases, sum_of_deaths = data
         fig, main_axes = self.configure_subplots()
 
+        # ensure that no negative axis is shown
+        main_axes[0].set_ylim(0, df_concrete['cases'].max())
+        main_axes[1].set_ylim(0, df_concrete['deaths'].max())
+
         self.plot(main_axes[0], 'cases', sum_of_cases, filter_value, df_concrete, first_day)
         self.plot(main_axes[1], 'deaths', sum_of_deaths, filter_value, df_concrete, first_day)
 

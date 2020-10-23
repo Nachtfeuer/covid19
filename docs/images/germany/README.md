@@ -19,7 +19,7 @@ You also can use the filter on "Landkreis":
 **Example:**
 
 ```
-python ..\..\..\visualize-germany.py --filter-by=landkreis --filter="SK Darmstadt" --filter="LK Darmstadt-Dieburg"
+python ..\..\..\visualize-germany.py --filter-by=landkreis --filter="SK Darmstadt" --filter="LK Darmstadt-Dieburg" --filter="LK Offenbach"
 ```
 
 **Please note**: You have to remove the JSON to update the cache.

@@ -24,6 +24,7 @@ import click
 import numpy as np
 import pandas as pd
 from io import StringIO
+from datetime import datetime
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -173,7 +174,8 @@ class Application:
     def configure_subplots(self):
         """Define layout, main title and resolution of image."""
         fig, main_axes = plt.subplots(nrows=2, ncols=1, sharex=True)
-        fig.suptitle(Application.DATA_URL, fontsize=8)
+        current_date = datetime.now().date().isoformat()
+        fig.suptitle(Application.DATA_URL + ' (' + current_date + ')', fontsize=8)
 
         # adjusting figure to show in requested resolution (default: 1024x768 pixel)
         DPI = fig.get_dpi()
